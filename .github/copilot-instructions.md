@@ -4,6 +4,7 @@
 - Always read `PLANNING.md` at the start of a new conversation to understand the project's architecture, goals, style, and constraints.
 - Check `TASK.md` before starting a new task. If the task isn't listed, add it with a brief description and today's date.
 - Use consistent naming conventions, file structure, and component organization as described in `PLANNING.md`.
+- Always assume we are working in WSL and using linux based file pathing.
 
 ### 🧱 Code Structure & Modularity
 - **Never create a file longer than 500 lines of code.** If a file approaches this limit, refactor by splitting it into modules or helper files.
@@ -26,7 +27,10 @@
 ### 📎 Style & Conventions
 - **Use Python** as the primary language.
 - **Follow PEP8**, use type hints, and format with `black`.
+- **Use `uv` for package management** everything should be done within the local project virtual environment.
 - **Use `pydantic` for data validation**.
+- **Use `python-dotenv`** for all sensitive configuration management like api keys and passwords
+- **Follow PLANNING.md** for other technical stack decisions.
 - Use `FastAPI` for APIs and `SQLAlchemy` or `SQLModel` for ORM if applicable.
 - Write **docstrings for every function** using the Google style:
   ```python

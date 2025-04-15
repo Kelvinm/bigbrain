@@ -23,7 +23,14 @@ Current Phase: In Progress (April 15, 2025)
 ### Up Next
 - [x] Set up GitHub Actions for CI/CD testing
 - [x] Create a simple command-line interface for manual backend testing
-- [ ] Prepare for Phase 2 (Enhanced Parsing & Relationships)
+- [x] Prepare for Phase 2 (Enhanced Parsing & Relationships)
+
+### Discovered During Work
+- [x] Update test files to match implemented components (April 15, 2025)
+  - [x] Updated test_graph_store.py
+  - [x] Created test_protocol.py
+  - [x] Created test_handler.py
+  - [x] Created test_main.py
 
 ## Phase 2: Backend - Enhanced Parsing & Relationships
 Status: Not Started

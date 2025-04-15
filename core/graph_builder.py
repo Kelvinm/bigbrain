@@ -91,13 +91,16 @@ class GraphBuilder:
         """
         file_path = parsed_data["file_path"]
         language = parsed_data["language"]
-        
-        # Create a file node
+          # Create a file node
         file_node_id = f"file:{file_path}"
+        file_attributes = {
+            "type": "file",
+            "name": Path(file_path).name,
+            "language": language,
+        }
         self.graph_store.add_node(
-            file_node_id,
-            "file",
-            name=Path(file_path).name,
+            node_id=file_node_id,
+            attributes=file_attributes,
             file_path=file_path,
             language=language
         )
@@ -122,16 +125,18 @@ class GraphBuilder:
         """
         func_name = func["name"]
         func_node_id = f"func:{file_path}:{func_name}"
-        
-        # Create function node
+          # Create function node
+        func_attributes = {
+            "type": "function",
+            "name": func_name,
+            "line": func.get("line"),
+            "end_line": func.get("end_line"),
+            "docstring": func.get("docstring")
+        }
         self.graph_store.add_node(
-            func_node_id,
-            "function",
-            name=func_name,
-            file_path=file_path,
-            line=func.get("line"),
-            end_line=func.get("end_line"),
-            docstring=func.get("docstring")
+            node_id=func_node_id,
+            attributes=func_attributes, 
+            file_path=file_path
         )
         
         # Add relationship from file to function
@@ -149,16 +154,18 @@ class GraphBuilder:
         """
         class_name = cls["name"]
         class_node_id = f"class:{file_path}:{class_name}"
-        
-        # Create class node
+          # Create class node
+        class_attributes = {
+            "type": "class",
+            "name": class_name,
+            "line": cls.get("line"),
+            "end_line": cls.get("end_line"),
+            "docstring": cls.get("docstring")
+        }
         self.graph_store.add_node(
-            class_node_id,
-            "class",
-            name=class_name,
-            file_path=file_path,
-            line=cls.get("line"),
-            end_line=cls.get("end_line"),
-            docstring=cls.get("docstring")
+            node_id=class_node_id,
+            attributes=class_attributes,
+            file_path=file_path
         )
         
         # Add relationship from file to class
@@ -168,17 +175,19 @@ class GraphBuilder:
         for method in cls.get("methods", []):
             method_name = method["name"]
             method_node_id = f"method:{file_path}:{class_name}.{method_name}"
-            
-            # Create method node
+              # Create method node
+            method_attributes = {
+                "type": "method",
+                "name": method_name,
+                "class_name": class_name,
+                "line": method.get("line"),
+                "end_line": method.get("end_line"),
+                "docstring": method.get("docstring")
+            }
             self.graph_store.add_node(
-                method_node_id,
-                "method",
-                name=method_name,
-                class_name=class_name,
-                file_path=file_path,
-                line=method.get("line"),
-                end_line=method.get("end_line"),
-                docstring=method.get("docstring")
+                node_id=method_node_id,
+                attributes=method_attributes,
+                file_path=file_path
             )
             
             # Add relationships

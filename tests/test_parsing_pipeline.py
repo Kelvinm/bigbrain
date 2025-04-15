@@ -136,11 +136,10 @@ class Calculator:
             
             # Verify the process was successful
             assert success is True
-            
-            # Verify file node was created
+              # Verify file node was created
             file_node_id = f"file:{test_file_path}"
             assert self.graph_store.graph.has_node(file_node_id)
-            file_node = self.graph_store.get_node_info(file_node_id)
+            file_node = self.graph_store.get_node(file_node_id)
             assert file_node["name"] == "test_module.py"
             assert file_node["language"] == "python"
             

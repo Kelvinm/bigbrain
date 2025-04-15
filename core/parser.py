@@ -203,14 +203,16 @@ class CodeParser:
         # Parse the source code into a syntax tree
         tree = self.parser.parse(bytes(source_code, 'utf8'))
         
-        # Extract functions and classes
+        # Extract structures
         functions = []
         classes = []
+        imports = []
+        function_calls = []
         
         # Get the root node of the syntax tree
         root_node = tree.root_node
         
-        # Find function and class definitions
+        # Find function and class definitions, imports, and function calls
         for child in root_node.children:
             if child.type == 'function_definition':
                 function_info = self._extract_function_info(child, source_code)
@@ -219,10 +221,23 @@ class CodeParser:
             elif child.type == 'class_definition':
                 class_info = self._extract_class_info(child, source_code)
                 classes.append(class_info)
+                
+            elif child.type == 'import_statement':
+                import_info = self._extract_import_info(child, source_code)
+                imports.append(import_info)
+                
+            elif child.type == 'import_from_statement':
+                import_info = self._extract_import_from_info(child, source_code)
+                imports.append(import_info)
+        
+        # Extract function calls from the entire tree
+        function_calls = self._extract_function_calls(root_node, source_code)
         
         return {
             "functions": functions,
-            "classes": classes
+            "classes": classes,
+            "imports": imports,
+            "function_calls": function_calls
         }
     
     def _extract_function_info(self, node: Node, source_code: str) -> Dict[str, Any]:
@@ -374,6 +389,141 @@ class CodeParser:
                 break
         
         return None
+    
+    def _extract_import_info(self, node: Node, source_code: str) -> Dict[str, Any]:
+        """
+        Extract information about an import statement from its syntax tree node.
+        
+        Args:
+            node: The import_statement node.
+            source_code: The source code string.
+            
+        Returns:
+            Dict[str, Any]: Import information.
+        """
+        imports = []
+        
+        # Get the line information
+        line = node.start_point[0] + 1  # Convert to 1-based line numbers
+        
+        # Extract all the imported modules
+        for child in node.children:
+            if child.type == 'dotted_name':
+                module_name = self._get_node_text(child, source_code)
+                imports.append({
+                    "module": module_name,
+                    "name": None,  # No specific name for regular imports
+                    "alias": None  # Will be set below if aliased
+                })
+                
+            # Check for aliases (import x as y)
+            elif child.type == 'aliased_import':
+                # Find the module name and alias
+                module = None
+                alias = None
+                
+                for aliased_child in child.children:
+                    if aliased_child.type == 'dotted_name':
+                        module = self._get_node_text(aliased_child, source_code)
+                    elif aliased_child.type == 'identifier':
+                        alias = self._get_node_text(aliased_child, source_code)
+                
+                if module:
+                    imports.append({
+                        "module": module,
+                        "name": None,
+                        "alias": alias
+                    })
+        
+        return {
+            "type": "import",
+            "line": line,
+            "imports": imports
+        }
+    
+    def _extract_import_from_info(self, node: Node, source_code: str) -> Dict[str, Any]:
+        """
+        Extract information about a from-import statement from its syntax tree node.
+        
+        Args:
+            node: The import_from_statement node.
+            source_code: The source code string.
+            
+        Returns:
+            Dict[str, Any]: Import information.
+        """
+        imports = []
+        module = None
+        line = node.start_point[0] + 1  # Convert to 1-based line numbers
+        
+        # Extract the module name
+        for child in node.children:
+            if child.type == 'dotted_name':
+                module = self._get_node_text(child, source_code)
+                break
+        
+        # Handle relative imports (from . import x)
+        if not module:
+            # Count dots for relative imports
+            dots = 0
+            for child in node.children:
+                if child.type == '.':
+                    dots += 1
+            
+            if dots > 0:
+                module = '.' * dots
+        
+        # Extract the imported names
+        import_clause = None
+        for child in node.children:
+            if child.type == 'import_clause':
+                import_clause = child
+                break
+                
+        if import_clause:
+            # Handle "from x import *"
+            for child in import_clause.children:
+                if child.type == 'wildcard_import':
+                    imports.append({
+                        "module": module,
+                        "name": "*",
+                        "alias": None
+                    })
+                    break
+            
+            # Handle "from x import y, z"
+            for child in import_clause.named_children:
+                if child.type == 'dotted_name':
+                    name = self._get_node_text(child, source_code)
+                    imports.append({
+                        "module": module,
+                        "name": name,
+                        "alias": None
+                    })
+                elif child.type == 'aliased_import':
+                    # Handle "from x import y as z"
+                    name = None
+                    alias = None
+                    
+                    for aliased_child in child.children:
+                        if aliased_child.type == 'dotted_name':
+                            name = self._get_node_text(aliased_child, source_code)
+                        elif aliased_child.type == 'identifier':
+                            alias = self._get_node_text(aliased_child, source_code)
+                    
+                    if name:
+                        imports.append({
+                            "module": module,
+                            "name": name,
+                            "alias": alias
+                        })
+        
+        return {
+            "type": "from_import",
+            "line": line,
+            "module": module,
+            "imports": imports
+        }
     
     def _get_node_text(self, node: Node, source_code: str) -> str:
         """

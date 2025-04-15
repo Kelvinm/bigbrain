@@ -58,6 +58,7 @@ class BridgeHandler:
             CommandType.GET_STATS: self._handle_get_stats,
             CommandType.PING: self._handle_ping,
         }
+    
     def process_input(self, input_json: str) -> Optional[str]:
         """
         Process an input JSON command and return a response.
@@ -69,29 +70,11 @@ class BridgeHandler:
             Optional[str]: JSON response string, or None if invalid input.
         """
         try:
-            # Try to parse the raw JSON first to extract the ID regardless of command validity
-            try:
-                raw_command = json.loads(input_json)
-                command_id = raw_command.get("id", "unknown")
-                
-                # Check for unsupported command types directly from raw JSON
-                command_type = raw_command.get("command")
-                if command_type and isinstance(command_type, str):
-                    try:
-                        CommandType(command_type)  # Try to convert to enum
-                    except ValueError:
-                        # Command type is not recognized in our enum
-                        return create_error_response(
-                            command_id, f"Unsupported command: {command_type}"
-                        )
-            except json.JSONDecodeError:
-                command_id = "unknown"
-            
             command = parse_command(input_json)
             
             if command is None:
                 return create_error_response(
-                    command_id, "Invalid command format"
+                    "unknown", "Invalid command format"
                 )
             
             handler = self.command_handlers.get(command.command)
